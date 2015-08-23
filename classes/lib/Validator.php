@@ -34,6 +34,18 @@ class Validator{
 		return $oCurrentRule;
 	}
 
+	public function getUserState($iBotScore,$iHumanScore){
+		if($iBotScore >= Config::Get('plugin.botchecker.bot_score_level')){
+			return 'bot';
+		}
+		
+		if($iHumanScore >= Config::Get('plugin.botchecker.human_score_level')){
+			return 'human';
+		}
+
+		return 'unknown';
+	}
+	
 }
 
 ?>

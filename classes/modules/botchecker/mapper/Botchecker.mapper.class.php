@@ -58,11 +58,11 @@ class PluginBotchecker_ModuleBotchecker_MapperBotchecker extends Mapper
 		return $aCounters;		
 	}	
 	
-	public function saveScore($iUserId,$aData){
+	public function saveScore($iUserId,$aData,$sState){
 		$sql="
 			INSERT INTO 
 				".Config::Get('db.table.botchecker_user_score')."
-			VALUES (?d,?d,?d)
+			VALUES (?d,?d,?d,?)
 			ON DUPLICATE KEY
 				UPDATE 
 					bot_score = ?d,
@@ -74,11 +74,56 @@ class PluginBotchecker_ModuleBotchecker_MapperBotchecker extends Mapper
 			$iUserId,
 			$aData['bot'],
 			$aData['human'],
+			$sState,
 			/* ON DUPLICATE */
 			$aData['bot'],
 			$aData['human']			
 		);		
 		
+	}
+
+	
+	public function getState($oUser){
+		$sql = "SELECT
+					botchecker_state
+				FROM
+					".Config::Get('db.table.botchecker_user_score')."
+				WHERE user_id = ?d
+		";
+		
+		if ($aRows=$this->oDb->select($sql,$oUser->GetId())) {
+			return $aRows[0]['botchecker_state'];
+		}
+		
+		return 'unknown';			
+	}
+	
+	public function deleteUser($iUserId){
+		$sql = "DELETE FROM 
+					".Config::Get('db.table.user')."
+				WHERE 
+					user_id = ?d
+				";
+		
+		return $this->oDb->query($sql,$iUserId);
+	}
+	
+	public function clearBotcheckerByUserId($iUserId){
+			$sql = "DELETE FROM 
+					".Config::Get('db.table.botchecker_user_score')."
+				WHERE 
+					user_id = ?d
+				";
+		
+		 	$this->oDb->query($sql,$iUserId);	
+		 	
+			$sql = "DELETE FROM 
+					".Config::Get('db.table.botchecker_action_counter')."
+				WHERE 
+					user_id = ?d
+				";
+		
+		 	$this->oDb->query($sql,$iUserId);		 	
 	}
 	
 }

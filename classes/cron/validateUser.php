@@ -9,6 +9,7 @@ require_once($sDirRoot."/../../engine/classes/Cron.class.php");
 
 require_once("CommonRule.php");
 require_once("Validator.php");
+require_once("StateProcessor.php");
 
 ini_set('error_reporting', E_ALL);
 error_reporting(E_ALL);
@@ -18,6 +19,8 @@ class validateUser extends Cron {
 	public function Client() {
 		$oValidator = new Validator();		
 		$aResult = array();
+		
+		$sTotalReport = '';
 		
 		while($oRule = $oValidator->getCurrentRule()){
 			$oRule->InitUsers();
@@ -37,8 +40,23 @@ class validateUser extends Cron {
 		}
 		
 		foreach($aResult as $iUserId => $aData){
-			$this->PluginBotchecker_Botchecker_saveScore($iUserId,$aData);
+			$sState = StateProcessor::getUserState($aData['bot'],$aData['human']);
+			$this->PluginBotchecker_Botchecker_saveScore($iUserId,$aData,$sState);
+			
+			$sReportString = StateProcessor::processUserState($iUserId,$sState);
+			if($sReportString){
+				$sTotalReport = $sTotalReport.$sReportString."<br>";	
+			}
+			
 		}
+		
+		$this->Mail_SetAdress(Config::Get('plugin.botchecker.notify_email'), '');
+		$this->Mail_SetSubject('Bot checker report');
+		$this->Mail_SetBody($sTotalReport);
+		$this->Mail_setHTML();
+ 		$this->Mail_Send();		
+ 		
+ 		$this->Cache_Clean();
 	}
 	
 }
