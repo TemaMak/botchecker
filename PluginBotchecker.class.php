@@ -20,7 +20,13 @@ class PluginBotchecker extends Plugin {
 
     // Активация плагина
     public function Activate() {
-    	
+		if (
+			!$this->isTableExists('prefix_botchecker_action_counter')
+			&& !$this->isTableExists('prefix_botchecker_user_score')
+		) {
+            $resutls = $this->ExportSQL(dirname(__FILE__) . '/activate.sql');
+            return $resutls['result'];
+        }    	
         return true;
     }
 
